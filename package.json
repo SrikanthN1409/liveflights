@@ -1,0 +1,27 @@
+{
+  "name": "earth-globe",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.0-beta.13"
+  },
+  "overrides": {
+    "vite": "^8.0.0-beta.13"
+  },
+  "dependencies": {
+    "@amcharts/amcharts5": "^5.16.0",
+    "@amcharts/amcharts5-geodata": "^5.1.5",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.19.0"
+  }
+}
