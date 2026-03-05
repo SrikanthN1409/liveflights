@@ -598,17 +598,19 @@ function buildMockResults(from, to, date, cabinClass, adults) {
 }
 
 // ── Serve frontend static files ──────────────────────────────────
-import { join } from "path";
-app.use(express.static(join(__dirname, "dist")));         // Vite build output
-app.use(express.static(join(__dirname, "public")));       // public assets
-app.use(express.static(join(__dirname)));                 // root (index.html fallback)
+import { join as pathJoin } from "path";
+app.use(express.static(pathJoin(__dirname, "dist")));
+app.use(express.static(pathJoin(__dirname, "public")));
+app.use(express.static(__dirname));
 
-// SPA fallback — serve index.html for any non-API route
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/") || req.path.startsWith("/health")) return next();
-  const indexPath = join(__dirname, "dist", "index.html");
-  if (existsSync(indexPath)) return res.sendFile(indexPath);
-  res.sendFile(join(__dirname, "index.html"));
+// SPA fallback — Express 5 requires explicit path pattern, not bare "*"
+app.get("/{*splat}", (req, res) => {
+  if (req.path.startsWith("/api/") || req.path === "/health") {
+    return res.status(404).json({ error: "Not found" });
+  }
+  const distIndex = pathJoin(__dirname, "dist", "index.html");
+  if (existsSync(distIndex)) return res.sendFile(distIndex);
+  res.sendFile(pathJoin(__dirname, "index.html"));
 });
 
 
