@@ -136,13 +136,30 @@ async function fetchADSB() {
 }
 
 // ── Fetch OpenSky ─────────────────────────────────────────────────
+let openSkyBackoffUntil = 0; // timestamp — skip calls until this time
+
 async function fetchOpenSky() {
+  // If we're in backoff period, skip silently
+  if (Date.now() < openSkyBackoffUntil) return [];
   try {
     const headers = process.env.OPENSKY_USER
       ? { Authorization: "Basic " + Buffer.from(`${process.env.OPENSKY_USER}:${process.env.OPENSKY_PASS}`).toString("base64") }
       : {};
-    const res  = await fetch("https://opensky-network.org/api/states/all", { headers });
-    const data = await res.json();
+    const res  = await fetch("https://opensky-network.org/api/states/all", { headers, signal: AbortSignal.timeout(8000) });
+
+    // Rate limited — back off for 2 minutes
+    if (res.status === 429 || res.status === 503) {
+      openSkyBackoffUntil = Date.now() + 2 * 60 * 1000;
+      return [];
+    }
+
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(_) {
+      // "Too many requests" plain text response
+      openSkyBackoffUntil = Date.now() + 2 * 60 * 1000;
+      return [];
+    }
     if (!data.states) return [];
 
     return data.states
@@ -163,7 +180,10 @@ async function fetchOpenSky() {
         source: "opensky"
       }));
   } catch (e) {
-    console.error("OpenSky error:", e.message);
+    // Only log non-rate-limit errors
+    if (!e.message?.includes("Too many") && !e.message?.includes("429")) {
+      console.error("OpenSky error:", e.message);
+    }
     return [];
   }
 }
@@ -577,5 +597,19 @@ function buildMockResults(from, to, date, cabinClass, adults) {
   };
 }
 
-// ── Start server ─────────────────────────────────────────────────
-httpServer.listen(PORT, () => console.log(`✈  LiveFlights server → http://localhost:${PORT}`));
+// ── Serve frontend static files ──────────────────────────────────
+import { join } from "path";
+app.use(express.static(join(__dirname, "dist")));         // Vite build output
+app.use(express.static(join(__dirname, "public")));       // public assets
+app.use(express.static(join(__dirname)));                 // root (index.html fallback)
+
+// SPA fallback — serve index.html for any non-API route
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/") || req.path.startsWith("/health")) return next();
+  const indexPath = join(__dirname, "dist", "index.html");
+  if (existsSync(indexPath)) return res.sendFile(indexPath);
+  res.sendFile(join(__dirname, "index.html"));
+});
+
+
+httpServer.listen(PORT, "0.0.0.0", () => console.log(`✈  LiveFlights server → http://0.0.0.0:${PORT}`));

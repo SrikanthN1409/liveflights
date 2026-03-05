@@ -1,18 +1,12 @@
 {
-  "name": "earth-globe",
-  "private": true,
-  "version": "0.0.0",
+  "name": "liveflights",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "node server.js",
     "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^8.0.0-beta.13"
-  },
-  "overrides": {
-    "vite": "^8.0.0-beta.13"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.16.0",
@@ -23,5 +17,11 @@
     "express-rate-limit": "^8.2.1",
     "node-fetch": "^3.3.2",
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.0-beta.13"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
