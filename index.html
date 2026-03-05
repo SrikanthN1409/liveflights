@@ -27,14 +27,6 @@
       <input id="search-input" type="text" placeholder="Flight, registration, hex…" autocomplete="off" spellcheck="false" />
       <kbd class="search-kbd">/</kbd>
       <div id="search-results"></div>
-      <div id="travel-search">
-  <input id="fromAirport" placeholder="From (DEL)">
-  <input id="toAirport" placeholder="To (DXB)">
-  <input id="travelDate" type="date">
-  <button id="btnSearchFlights">Search Flights</button>
-</div>
-
-<div id="flightResults"></div>
     </div>
 
     <div class="bar-actions">
@@ -53,6 +45,10 @@
       <button class="bar-btn" id="btn-nearby" title="Nearby Flights (N)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/></svg>
         Nearby
+      </button>
+      <button class="bar-btn accent-btn" id="btn-flight-search" title="Search Flights (S)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16v-2a4 4 0 0 0-4-4H5"/><polyline points="1 12 5 8 9 12"/><path d="M3 8v2a4 4 0 0 0 4 4h12"/><polyline points="23 16 19 20 15 16"/></svg>
+        Flights
       </button>
       <span id="flight-count" class="flight-count">— flights</span>
       <button id="hamburger" aria-label="Menu">☰</button>
@@ -307,10 +303,6 @@
       <span class="search-icon">⌕</span>
       <input id="mobile-search-input" type="text" placeholder="Search flight, reg, hex…" autocomplete="off" />
     </div>
-    <!-- ✈ Flight Search prominent button -->
-    <button class="mob-flight-search-btn" id="mob-fs-btn">
-      ✈ Search Flights &amp; Prices
-    </button>
     <div class="mob-btn-row">
       <button class="mob-btn" data-panel="filter-panel">🔽 Filters</button>
       <button class="mob-btn" data-panel="layers-panel">🗂 Layers</button>
@@ -319,8 +311,104 @@
     </div>
   </div>
 
-  <!-- Floating search button for mobile (always visible on globe) -->
-  <button id="fab-search" title="Search Flights">✈</button>
+  <!-- ── Flight Search Modal ─────────────────────────────────────── -->
+  <div id="flight-search-overlay" class="fs-overlay">
+    <div class="fs-modal">
+      <div class="fs-modal-header">
+        <div class="fs-title-group">
+          <span class="fs-icon">✈</span>
+          <span class="fs-title">FLIGHT SEARCH</span>
+          <span class="fs-subtitle">Find available flights between airports</span>
+        </div>
+        <button class="fs-close-btn" id="fs-close">✕</button>
+      </div>
+
+      <div class="fs-form">
+        <!-- From Airport -->
+        <div class="fs-field-group">
+          <div class="fs-field">
+            <label class="fs-label">FROM</label>
+            <div class="fs-autocomplete-wrap">
+              <span class="fs-field-icon">🛫</span>
+              <input id="fs-from" class="fs-input" type="text" placeholder="City or airport code…" autocomplete="off" />
+              <div class="fs-dropdown" id="fs-from-dropdown"></div>
+            </div>
+            <div class="fs-selected-apt" id="fs-from-selected"></div>
+          </div>
+
+          <button class="fs-swap-btn" id="fs-swap" title="Swap airports">⇄</button>
+
+          <div class="fs-field">
+            <label class="fs-label">TO</label>
+            <div class="fs-autocomplete-wrap">
+              <span class="fs-field-icon">🛬</span>
+              <input id="fs-to" class="fs-input" type="text" placeholder="City or airport code…" autocomplete="off" />
+              <div class="fs-dropdown" id="fs-to-dropdown"></div>
+            </div>
+            <div class="fs-selected-apt" id="fs-to-selected"></div>
+          </div>
+        </div>
+
+        <!-- Date + Class + Passengers -->
+        <div class="fs-options-row">
+          <div class="fs-option-field">
+            <label class="fs-label">DATE</label>
+            <div class="fs-autocomplete-wrap">
+              <span class="fs-field-icon">📅</span>
+              <input id="fs-date" class="fs-input" type="date" />
+            </div>
+          </div>
+          <div class="fs-option-field">
+            <label class="fs-label">CLASS</label>
+            <div class="fs-autocomplete-wrap">
+              <span class="fs-field-icon">💺</span>
+              <select id="fs-class" class="fs-input fs-select">
+                <option value="economy">Economy</option>
+                <option value="premium_economy">Prem. Economy</option>
+                <option value="business">Business</option>
+                <option value="first">First Class</option>
+              </select>
+            </div>
+          </div>
+          <div class="fs-option-field">
+            <label class="fs-label">ADULTS</label>
+            <div class="fs-autocomplete-wrap">
+              <span class="fs-field-icon">👤</span>
+              <select id="fs-passengers" class="fs-input fs-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button class="fs-search-btn" id="fs-search-btn">
+          <span id="fs-btn-text">🔍 Search Flights</span>
+          <span id="fs-spinner" class="fs-spinner" style="display:none">⏳</span>
+        </button>
+      </div>
+
+      <!-- Results -->
+      <div id="fs-results-wrap" class="fs-results-wrap" style="display:none">
+        <div class="fs-results-header">
+          <span class="fs-results-title" id="fs-results-title">Results</span>
+          <div class="fs-sort-group">
+            <span class="fs-sort-lbl">Sort:</span>
+            <button class="fs-sort-btn active" data-sort="price">Price</button>
+            <button class="fs-sort-btn" data-sort="duration">Duration</button>
+            <button class="fs-sort-btn" data-sort="departure">Departure</button>
+          </div>
+        </div>
+        <div id="fs-results-list" class="fs-results-list"></div>
+      </div>
+
+      <div id="fs-error-wrap" class="fs-error-wrap" style="display:none">
+        <span id="fs-error-msg"></span>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

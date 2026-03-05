@@ -1718,16 +1718,9 @@ if (fsDateInput) {
 
 // ── Open / Close modal ────────────────────────────────────────
 const fsOverlay = document.getElementById("flight-search-overlay");
-
-const openFlightSearch = () => {
+document.getElementById("btn-flight-search")?.addEventListener("click", () => {
   if (fsOverlay) fsOverlay.classList.add("visible");
-  document.getElementById("mobile-menu")?.classList.remove("open");
-};
-
-document.getElementById("btn-flight-search")?.addEventListener("click", openFlightSearch);
-document.getElementById("mob-fs-btn")?.addEventListener("click", openFlightSearch);
-document.getElementById("fab-search")?.addEventListener("click", openFlightSearch);
-
+});
 document.getElementById("fs-close")?.addEventListener("click", () => {
   if (fsOverlay) fsOverlay.classList.remove("visible");
 });
