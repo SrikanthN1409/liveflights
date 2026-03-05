@@ -937,13 +937,17 @@ body::before {
 
   #flight-panel {
     top: auto;
-    bottom: 76px;
+    bottom: -70vh;        /* hidden below screen by default */
     right: 8px; left: 8px;
     width: auto;
     max-height: 55vh;
     overflow-y: auto;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  #flight-panel.visible { right: 8px; }
+  #flight-panel.visible {
+    bottom: 76px;         /* slide up into view */
+    right: 8px;
+  }
 
   .side-panel, .wide-panel {
     left: -100vw !important;  /* hidden by default on mobile */
