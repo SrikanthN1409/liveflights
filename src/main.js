@@ -8,7 +8,10 @@ import "./style.css";
 // ═══════════════════════════════════════════════════════════
 //  CONSTANTS
 // ═══════════════════════════════════════════════════════════
-const WS_URL     = "ws://localhost:3000";
+// Auto-detect backend — same host in production, localhost:3000 in dev
+const IS_PROD   = window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+const API_BASE  = IS_PROD ? `${window.location.protocol}//${window.location.host}` : "http://localhost:3000";
+const WS_URL    = IS_PROD ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}` : "ws://localhost:3000";
 const MAX_PLANES = 4000;
 const UPDATE_MS  = 4500;
 const PLANE_SVG  = "M0,-16 C1,-12 2,-8 2,-4 L14,4 L14,7 L2,3 L2,10 L5,12 L5,14 L0,13 L-5,14 L-5,12 L-2,10 L-2,3 L-14,7 L-14,4 L-2,-4 C-2,-8 -1,-12 0,-16 Z";
@@ -1762,7 +1765,7 @@ document.getElementById("fs-search-btn")?.addEventListener("click", async () => 
   try {
     const cabinClass = document.getElementById("fs-class")?.value || "economy";
     const adults     = document.getElementById("fs-passengers")?.value || "1";
-    const url        = `http://localhost:3000/api/searchFlights?from=${encodeURIComponent(fsFromCode)}&to=${encodeURIComponent(fsToCode)}&date=${dateVal}&cabinClass=${cabinClass}&adults=${adults}`;
+    const url        = `${API_BASE}/api/searchFlights?from=${encodeURIComponent(fsFromCode)}&to=${encodeURIComponent(fsToCode)}&date=${dateVal}&cabinClass=${cabinClass}&adults=${adults}`;
 
     let data = null;
     try {
