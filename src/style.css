@@ -926,6 +926,49 @@ body::before {
 }
 .mob-btn:hover { background: rgba(0,238,255,0.1); border-color: var(--accent); color: var(--accent); }
 
+/* ── Mobile Flight Search prominent button ──────────────────────── */
+.mob-flight-search-btn {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #0066ff, #00aaff);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0,150,255,0.4);
+  transition: all 0.2s;
+}
+.mob-flight-search-btn:active { transform: scale(0.97); }
+
+/* ── Floating Action Button (always visible on globe) ───────────── */
+#fab-search {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0066ff, #00aaff);
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0,100,255,0.5);
+  transition: transform 0.2s;
+}
+#fab-search:active { transform: scale(0.9); }
+
+@media (max-width: 768px) {
+  #fab-search { display: flex; align-items: center; justify-content: center; }
+}
+
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
   #search-box { display: none; }
