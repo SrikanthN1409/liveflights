@@ -1493,15 +1493,152 @@ function mergeServerAirports(list) {
   });
 }
 
-// ── Autocomplete ────────────────────────────────────────────
+// ── Airport search — live query against free OpenFlights data ──
+// We use a bundled comprehensive DB for instant offline search
+const FULL_AIRPORT_DB = [
+  // India - All commercial airports
+  {iata:"DEL",city:"Delhi",name:"Indira Gandhi Intl",country:"India"},
+  {iata:"BOM",city:"Mumbai",name:"Chhatrapati Shivaji Intl",country:"India"},
+  {iata:"BLR",city:"Bengaluru",name:"Kempegowda Intl",country:"India"},
+  {iata:"MAA",city:"Chennai",name:"Chennai Intl",country:"India"},
+  {iata:"HYD",city:"Hyderabad",name:"Rajiv Gandhi Intl",country:"India"},
+  {iata:"CCU",city:"Kolkata",name:"Netaji Subhas Intl",country:"India"},
+  {iata:"COK",city:"Kochi",name:"Cochin Intl",country:"India"},
+  {iata:"PNQ",city:"Pune",name:"Pune Intl",country:"India"},
+  {iata:"AMD",city:"Ahmedabad",name:"Sardar Vallabhbhai Patel Intl",country:"India"},
+  {iata:"GOI",city:"Goa",name:"Goa Dabolim Intl",country:"India"},
+  {iata:"JAI",city:"Jaipur",name:"Jaipur Intl",country:"India"},
+  {iata:"LKO",city:"Lucknow",name:"Chaudhary Charan Singh Intl",country:"India"},
+  {iata:"VGA",city:"Vijayawada",name:"Vijayawada Intl",country:"India"},
+  {iata:"VTZ",city:"Visakhapatnam",name:"Visakhapatnam Intl",country:"India"},
+  {iata:"TRV",city:"Thiruvananthapuram",name:"Trivandrum Intl",country:"India"},
+  {iata:"CJB",city:"Coimbatore",name:"Coimbatore Intl",country:"India"},
+  {iata:"IXM",city:"Madurai",name:"Madurai Intl",country:"India"},
+  {iata:"TIR",city:"Tirupati",name:"Tirupati Intl",country:"India"},
+  {iata:"IXE",city:"Mangalore",name:"Mangalore Intl",country:"India"},
+  {iata:"NAG",city:"Nagpur",name:"Dr Babasaheb Ambedkar Intl",country:"India"},
+  {iata:"IXC",city:"Chandigarh",name:"Chandigarh Intl",country:"India"},
+  {iata:"ATQ",city:"Amritsar",name:"Sri Guru Ram Dass Jee Intl",country:"India"},
+  {iata:"SXR",city:"Srinagar",name:"Srinagar Intl",country:"India"},
+  {iata:"IXB",city:"Bagdogra",name:"Bagdogra Intl",country:"India"},
+  {iata:"GAU",city:"Guwahati",name:"Lokpriya Gopinath Bordoloi Intl",country:"India"},
+  {iata:"VNS",city:"Varanasi",name:"Lal Bahadur Shastri Intl",country:"India"},
+  {iata:"IXR",city:"Ranchi",name:"Birsa Munda Intl",country:"India"},
+  {iata:"BBI",city:"Bhubaneswar",name:"Biju Patnaik Intl",country:"India"},
+  {iata:"PAT",city:"Patna",name:"Jay Prakash Narayan Intl",country:"India"},
+  {iata:"BHO",city:"Bhopal",name:"Raja Bhoj Intl",country:"India"},
+  {iata:"IDR",city:"Indore",name:"Devi Ahilya Bai Holkar Intl",country:"India"},
+  {iata:"RPR",city:"Raipur",name:"Swami Vivekananda Intl",country:"India"},
+  {iata:"BDQ",city:"Vadodara",name:"Vadodara Intl",country:"India"},
+  {iata:"STV",city:"Surat",name:"Surat Intl",country:"India"},
+  {iata:"RAJ",city:"Rajkot",name:"Rajkot Intl",country:"India"},
+  {iata:"JDH",city:"Jodhpur",name:"Jodhpur Intl",country:"India"},
+  {iata:"UDR",city:"Udaipur",name:"Maharana Pratap Intl",country:"India"},
+  {iata:"AGR",city:"Agra",name:"Agra Intl",country:"India"},
+  {iata:"IXA",city:"Agartala",name:"Maharaja Bir Bikram Intl",country:"India"},
+  {iata:"IMF",city:"Imphal",name:"Bir Tikendrajit Intl",country:"India"},
+  {iata:"DIB",city:"Dibrugarh",name:"Dibrugarh Airport",country:"India"},
+  {iata:"GOP",city:"Gorakhpur",name:"Gorakhpur Airport",country:"India"},
+  {iata:"GWL",city:"Gwalior",name:"Gwalior Airport",country:"India"},
+  {iata:"IXU",city:"Aurangabad",name:"Aurangabad Airport",country:"India"},
+  {iata:"DED",city:"Dehradun",name:"Jolly Grant Airport",country:"India"},
+  {iata:"IXL",city:"Leh",name:"Kushok Bakula Rimpochhe Airport",country:"India"},
+  {iata:"HBX",city:"Hubli",name:"Hubli Airport",country:"India"},
+  {iata:"RJA",city:"Rajahmundry",name:"Rajahmundry Airport",country:"India"},
+  {iata:"KLH",city:"Kolhapur",name:"Kolhapur Airport",country:"India"},
+  {iata:"NDC",city:"Nanded",name:"Nanded Airport",country:"India"},
+  {iata:"NMB",city:"Daman",name:"Daman Airport",country:"India"},
+  {iata:"PGH",city:"Pantnagar",name:"Pantnagar Airport",country:"India"},
+  {iata:"SHL",city:"Shillong",name:"Shillong Airport",country:"India"},
+  {iata:"IXS",city:"Silchar",name:"Kumbhirgram Airport",country:"India"},
+  {iata:"JSA",city:"Jaisalmer",name:"Jaisalmer Airport",country:"India"},
+  {iata:"IXD",city:"Allahabad",name:"Bamrauli Airport",country:"India"},
+  {iata:"BHU",city:"Bhavnagar",name:"Bhavnagar Airport",country:"India"},
+  {iata:"JGA",city:"Jamnagar",name:"Jamnagar Airport",country:"India"},
+  {iata:"PYB",city:"Jeypore",name:"Jeypore Airport",country:"India"},
+  {iata:"VDY",city:"Vidyanagar",name:"Jindal Vijayanagar Airport",country:"India"},
+  {iata:"IXW",city:"Jamshedpur",name:"Sonari Airport",country:"India"},
+  {iata:"DBR",city:"Darbhanga",name:"Darbhanga Airport",country:"India"},
+  {iata:"HJR",city:"Khajuraho",name:"Khajuraho Airport",country:"India"},
+  {iata:"TEZ",city:"Tezpur",name:"Tezpur Airport",country:"India"},
+  {iata:"ZER",city:"Zero",name:"Ziro Airport",country:"India"},
+  {iata:"IXV",city:"Along",name:"Along Airport",country:"India"},
+  {iata:"LDA",city:"Malda",name:"Malda Airport",country:"India"},
+  {iata:"BEK",city:"Bareilly",name:"Bareilly Airport",country:"India"},
+  {iata:"KUU",city:"Kullu",name:"Bhuntar Airport",country:"India"},
+  {iata:"SLV",city:"Shimla",name:"Shimla Airport",country:"India"},
+  {iata:"DHM",city:"Dharamsala",name:"Kangra Airport",country:"India"},
+  {iata:"IXH",city:"Kailashahar",name:"Kailashahar Airport",country:"India"},
+  {iata:"IXT",city:"Pasighat",name:"Pasighat Airport",country:"India"},
+  {iata:"MYQ",city:"Mysuru",name:"Mysore Airport",country:"India"},
+  {iata:"BLH",city:"Bellary",name:"Bellary Airport",country:"India"},
+  {iata:"WGC",city:"Warangal",name:"Warangal Airport",country:"India"},
+  {iata:"CBD",city:"Car Nicobar",name:"Car Nicobar Airport",country:"India"},
+  {iata:"IXZ",city:"Port Blair",name:"Veer Savarkar Intl",country:"India"},
+  // International
+  {iata:"DXB",city:"Dubai",name:"Dubai Intl",country:"UAE"},
+  {iata:"DOH",city:"Doha",name:"Hamad Intl",country:"Qatar"},
+  {iata:"AUH",city:"Abu Dhabi",name:"Abu Dhabi Intl",country:"UAE"},
+  {iata:"LHR",city:"London",name:"Heathrow",country:"UK"},
+  {iata:"CDG",city:"Paris",name:"Charles de Gaulle",country:"France"},
+  {iata:"FRA",city:"Frankfurt",name:"Frankfurt Intl",country:"Germany"},
+  {iata:"SIN",city:"Singapore",name:"Changi",country:"Singapore"},
+  {iata:"BKK",city:"Bangkok",name:"Suvarnabhumi",country:"Thailand"},
+  {iata:"KUL",city:"Kuala Lumpur",name:"KLIA",country:"Malaysia"},
+  {iata:"HKG",city:"Hong Kong",name:"Hong Kong Intl",country:"China"},
+  {iata:"ICN",city:"Seoul",name:"Incheon Intl",country:"South Korea"},
+  {iata:"NRT",city:"Tokyo",name:"Narita Intl",country:"Japan"},
+  {iata:"HND",city:"Tokyo",name:"Haneda",country:"Japan"},
+  {iata:"SYD",city:"Sydney",name:"Kingsford Smith",country:"Australia"},
+  {iata:"MEL",city:"Melbourne",name:"Tullamarine",country:"Australia"},
+  {iata:"JFK",city:"New York",name:"John F Kennedy",country:"USA"},
+  {iata:"LAX",city:"Los Angeles",name:"Los Angeles Intl",country:"USA"},
+  {iata:"ORD",city:"Chicago",name:"O'Hare Intl",country:"USA"},
+  {iata:"ATL",city:"Atlanta",name:"Hartsfield Jackson",country:"USA"},
+  {iata:"SFO",city:"San Francisco",name:"San Francisco Intl",country:"USA"},
+  {iata:"DFW",city:"Dallas",name:"Dallas Fort Worth",country:"USA"},
+  {iata:"MIA",city:"Miami",name:"Miami Intl",country:"USA"},
+  {iata:"CMB",city:"Colombo",name:"Bandaranaike Intl",country:"Sri Lanka"},
+  {iata:"DAC",city:"Dhaka",name:"Hazrat Shahjalal Intl",country:"Bangladesh"},
+  {iata:"KTM",city:"Kathmandu",name:"Tribhuvan Intl",country:"Nepal"},
+  {iata:"RUH",city:"Riyadh",name:"King Khalid Intl",country:"Saudi Arabia"},
+  {iata:"JED",city:"Jeddah",name:"King Abdulaziz Intl",country:"Saudi Arabia"},
+  {iata:"MCT",city:"Muscat",name:"Muscat Intl",country:"Oman"},
+  {iata:"KWI",city:"Kuwait City",name:"Kuwait Intl",country:"Kuwait"},
+  {iata:"BAH",city:"Manama",name:"Bahrain Intl",country:"Bahrain"},
+  {iata:"IST",city:"Istanbul",name:"Istanbul Intl",country:"Turkey"},
+  {iata:"AMS",city:"Amsterdam",name:"Schiphol",country:"Netherlands"},
+  {iata:"MAD",city:"Madrid",name:"Barajas",country:"Spain"},
+  {iata:"BCN",city:"Barcelona",name:"El Prat",country:"Spain"},
+  {iata:"MUC",city:"Munich",name:"Munich Intl",country:"Germany"},
+  {iata:"ZRH",city:"Zurich",name:"Zurich Airport",country:"Switzerland"},
+  {iata:"GRU",city:"São Paulo",name:"Guarulhos Intl",country:"Brazil"},
+  {iata:"JNB",city:"Johannesburg",name:"OR Tambo Intl",country:"South Africa"},
+  {iata:"CAI",city:"Cairo",name:"Cairo Intl",country:"Egypt"},
+  {iata:"NBO",city:"Nairobi",name:"Jomo Kenyatta Intl",country:"Kenya"},
+  {iata:"ADD",city:"Addis Ababa",name:"Bole Intl",country:"Ethiopia"},
+  {iata:"PEK",city:"Beijing",name:"Capital Intl",country:"China"},
+  {iata:"PVG",city:"Shanghai",name:"Pudong Intl",country:"China"},
+  {iata:"CGK",city:"Jakarta",name:"Soekarno-Hatta Intl",country:"Indonesia"},
+  {iata:"MNL",city:"Manila",name:"Ninoy Aquino Intl",country:"Philippines"},
+  {iata:"YYZ",city:"Toronto",name:"Pearson Intl",country:"Canada"},
+  {iata:"MEX",city:"Mexico City",name:"Juárez Intl",country:"Mexico"},
+  {iata:"BOG",city:"Bogotá",name:"El Dorado Intl",country:"Colombia"},
+];
+
+// Merge FULL_AIRPORT_DB into AIRPORT_DB on init
+FULL_AIRPORT_DB.forEach(a => {
+  if (!AIRPORT_DB.find(x => x.iata === a.iata)) AIRPORT_DB.push(a);
+});
+
 function filterAirports(q) {
   if (!q || q.length < 1) return [];
   const u = q.toUpperCase();
   return AIRPORT_DB.filter(a =>
     a.iata.includes(u) ||
-    a.name.toUpperCase().includes(u) ||
-    a.city.toUpperCase().includes(u) ||
-    a.country.toUpperCase().includes(u)
+    (a.name  || "").toUpperCase().includes(u) ||
+    (a.city  || "").toUpperCase().includes(u) ||
+    (a.country || "").toUpperCase().includes(u)
   ).slice(0, 8);
 }
 
