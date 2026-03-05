@@ -946,11 +946,15 @@ body::before {
   #flight-panel.visible { right: 8px; }
 
   .side-panel, .wide-panel {
-    left: 8px !important;
+    left: -100vw !important;  /* hidden by default on mobile */
     right: 8px;
     width: auto;
     top: calc(var(--bar-h) + 8px);
     max-height: 70vh;
+  }
+
+  .side-panel.open, .wide-panel.open {
+    left: 8px !important;  /* visible when open */
   }
 
   .controls {
