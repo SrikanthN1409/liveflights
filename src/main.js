@@ -1305,6 +1305,16 @@ const hamburger  = document.getElementById("hamburger");
 const mobileMenu = document.getElementById("mobile-menu");
 hamburger?.addEventListener("click", () => mobileMenu?.classList.toggle("open"));
 
+// Force close ALL panels on mobile load — globe must be visible first
+if (window.innerWidth <= 768) {
+  document.querySelectorAll(".side-panel, .wide-panel").forEach(p => {
+    p.classList.remove("open");
+  });
+  const fp = document.getElementById("flight-panel");
+  if (fp) fp.classList.remove("visible");
+  if (mobileMenu) mobileMenu.classList.remove("open");
+}
+
 document.querySelectorAll(".mob-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const panel = btn.getAttribute("data-panel");

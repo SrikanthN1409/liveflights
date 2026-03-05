@@ -950,15 +950,28 @@ body::before {
   }
 
   .side-panel, .wide-panel {
-    left: -100vw !important;  /* hidden by default on mobile */
-    right: 8px;
-    width: auto;
-    top: calc(var(--bar-h) + 8px);
-    max-height: 70vh;
+    position: fixed !important;   /* fixed to screen, not page */
+    left: -100vw !important;      /* off screen left by default */
+    right: auto;
+    width: 90vw !important;
+    max-width: 380px;
+    top: calc(var(--bar-h) + 8px) !important;
+    max-height: 75vh;
+    z-index: 100;
+    overflow-y: auto;
   }
 
   .side-panel.open, .wide-panel.open {
-    left: 8px !important;  /* visible when open */
+    left: 5vw !important;         /* centered on screen when open */
+  }
+
+  /* Ensure globe is always behind everything */
+  #chartdiv {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    z-index: 0 !important;
   }
 
   .controls {
