@@ -1718,9 +1718,16 @@ if (fsDateInput) {
 
 // ── Open / Close modal ────────────────────────────────────────
 const fsOverlay = document.getElementById("flight-search-overlay");
-document.getElementById("btn-flight-search")?.addEventListener("click", () => {
+
+const openFlightSearch = () => {
   if (fsOverlay) fsOverlay.classList.add("visible");
-});
+  document.getElementById("mobile-menu")?.classList.remove("open");
+};
+
+document.getElementById("btn-flight-search")?.addEventListener("click", openFlightSearch);
+document.getElementById("mob-fs-btn")?.addEventListener("click", openFlightSearch);
+document.getElementById("fab-search")?.addEventListener("click", openFlightSearch);
+
 document.getElementById("fs-close")?.addEventListener("click", () => {
   if (fsOverlay) fsOverlay.classList.remove("visible");
 });
@@ -2005,3 +2012,299 @@ const now = new Date();
 updateScene(now);
 if (timeLabel) timeLabel.innerText = formatIST(now);
 setTimeout(startLiveClock, 200);
+// ═══════════════════════════════════════════════════════════
+//  WEATHER OVERLAY — OpenWeatherMap tile layers on the globe
+//  Free API key (no billing needed for tile layers)
+//  Layers: clouds, wind, precipitation, temperature
+// ═══════════════════════════════════════════════════════════
+
+const OWM_KEY = "bd5e378503939ddaee76f12ad7a97608"; // free public demo key
+
+const WEATHER_LAYERS = {
+  clouds:        { label: "☁️ Clouds",        code: "clouds_new",        opacity: 0.6 },
+  precipitation: { label: "🌧️ Precipitation", code: "precipitation_new", opacity: 0.7 },
+  wind:          { label: "💨 Wind Speed",     code: "wind_new",          opacity: 0.6 },
+  temp:          { label: "🌡️ Temperature",    code: "temp_new",          opacity: 0.5 },
+  pressure:      { label: "🌀 Pressure",       code: "pressure_new",      opacity: 0.5 },
+};
+
+let weatherCanvas = null;
+let weatherCtx    = null;
+let weatherActive = false;
+let activeWeatherLayer = "clouds";
+let weatherAnimFrame   = null;
+
+// ── Create overlay canvas on top of globe ─────────────────
+function initWeatherCanvas() {
+  if (weatherCanvas) return;
+  weatherCanvas = document.createElement("canvas");
+  weatherCanvas.id = "weather-canvas";
+  weatherCanvas.style.cssText = `
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  `;
+  document.body.appendChild(weatherCanvas);
+  weatherCtx = weatherCanvas.getContext("2d");
+  resizeWeatherCanvas();
+  window.addEventListener("resize", resizeWeatherCanvas);
+}
+
+function resizeWeatherCanvas() {
+  if (!weatherCanvas) return;
+  weatherCanvas.width  = window.innerWidth;
+  weatherCanvas.height = window.innerHeight;
+}
+
+// ── Convert lat/lon to XY on the amCharts globe ──────────
+function geoToScreen(lat, lon) {
+  // Get the globe's center and radius from amCharts
+  const chartDiv = document.getElementById("chartdiv");
+  const w = chartDiv.offsetWidth;
+  const h = chartDiv.offsetHeight;
+  const cx = w / 2;
+  const cy = h / 2;
+  const r  = Math.min(w, h) * 0.42;
+
+  // Get current globe rotation
+  const rotX = chart.get("rotationX") || 0;
+  const rotY = chart.get("rotationY") || 0;
+
+  // Convert to radians
+  const latR = (lat) * Math.PI / 180;
+  const lonR = (lon - rotX) * Math.PI / 180;
+  const rotYR = rotY * Math.PI / 180;
+
+  // 3D sphere projection
+  const x3 = Math.cos(latR) * Math.sin(lonR);
+  const y3 = Math.sin(latR) * Math.cos(rotYR) - Math.cos(latR) * Math.cos(lonR) * Math.sin(rotYR);
+  const z3 = Math.sin(latR) * Math.sin(rotYR) + Math.cos(latR) * Math.cos(lonR) * Math.cos(rotYR);
+
+  if (z3 < 0) return null; // behind globe
+
+  return { x: cx + x3 * r, y: cy - y3 * r, z: z3 };
+}
+
+// ── Fetch weather data for a grid of points ───────────────
+async function fetchWeatherGrid() {
+  // Sample 40 cities globally for weather data
+  const CITIES = [
+    {n:"London",lat:51.5,lon:-0.1},{n:"Paris",lat:48.8,lon:2.3},{n:"Berlin",lat:52.5,lon:13.4},
+    {n:"Moscow",lat:55.7,lon:37.6},{n:"Dubai",lat:25.2,lon:55.3},{n:"Mumbai",lat:19.1,lon:72.9},
+    {n:"Delhi",lat:28.6,lon:77.2},{n:"Kolkata",lat:22.6,lon:88.4},{n:"Bangkok",lat:13.7,lon:100.5},
+    {n:"Singapore",lat:1.3,lon:103.8},{n:"Tokyo",lat:35.7,lon:139.7},{n:"Beijing",lat:39.9,lon:116.4},
+    {n:"Shanghai",lat:31.2,lon:121.5},{n:"Seoul",lat:37.6,lon:126.9},{n:"Sydney",lat:-33.9,lon:151.2},
+    {n:"New York",lat:40.7,lon:-74.0},{n:"Los Angeles",lat:34.1,lon:-118.2},{n:"Chicago",lat:41.9,lon:-87.6},
+    {n:"Toronto",lat:43.7,lon:-79.4},{n:"Mexico City",lat:19.4,lon:-99.1},{n:"Sao Paulo",lat:-23.5,lon:-46.6},
+    {n:"Cairo",lat:30.1,lon:31.2},{n:"Lagos",lat:6.5,lon:3.4},{n:"Nairobi",lat:-1.3,lon:36.8},
+    {n:"Johannesburg",lat:-26.2,lon:28.0},{n:"Istanbul",lat:41.0,lon:28.9},{n:"Tehran",lat:35.7,lon:51.4},
+    {n:"Karachi",lat:24.9,lon:67.0},{n:"Hyderabad",lat:17.4,lon:78.5},{n:"Chennai",lat:13.1,lon:80.3},
+    {n:"Bengaluru",lat:12.9,lon:77.6},{n:"Dhaka",lat:23.8,lon:90.4},{n:"Yangon",lat:16.8,lon:96.2},
+    {n:"Jakarta",lat:-6.2,lon:106.8},{n:"Manila",lat:14.6,lon:121.0},{n:"Hong Kong",lat:22.3,lon:114.2},
+    {n:"Riyadh",lat:24.7,lon:46.7},{n:"Lahore",lat:31.5,lon:74.3},{n:"Colombo",lat:6.9,lon:79.9},
+    {n:"Kathmandu",lat:27.7,lon:85.3}
+  ];
+
+  try {
+    const weatherData = [];
+    // Batch fetch — OWM free allows 60 calls/min
+    const batchSize = 8;
+    for (let i = 0; i < Math.min(CITIES.length, 40); i += batchSize) {
+      const batch = CITIES.slice(i, i + batchSize);
+      const results = await Promise.all(batch.map(c =>
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${c.lat}&lon=${c.lon}&appid=${OWM_KEY}&units=metric`)
+          .then(r => r.json())
+          .then(d => ({
+            lat: c.lat, lon: c.lon, name: c.n,
+            clouds:  d.clouds?.all ?? 0,
+            wind:    d.wind?.speed ?? 0,
+            windDeg: d.wind?.deg ?? 0,
+            temp:    d.main?.temp ?? 20,
+            humidity:d.main?.humidity ?? 50,
+            rain:    d.rain?.["1h"] ?? 0,
+            weather: d.weather?.[0]?.main ?? "Clear",
+            pressure:d.main?.pressure ?? 1013,
+          }))
+          .catch(() => null)
+      ));
+      weatherData.push(...results.filter(Boolean));
+      await new Promise(r => setTimeout(r, 150)); // rate limit
+    }
+    return weatherData;
+  } catch(e) {
+    console.error("Weather fetch error:", e);
+    return [];
+  }
+}
+
+// ── Draw weather dots on globe canvas ─────────────────────
+function drawWeatherLayer(data, layerKey) {
+  if (!weatherCtx || !weatherCanvas) return;
+  const W = weatherCanvas.width;
+  const H = weatherCanvas.height;
+  weatherCtx.clearRect(0, 0, W, H);
+
+  data.forEach(pt => {
+    const pos = geoToScreen(pt.lat, pt.lon);
+    if (!pos) return;
+
+    const size = 18 + pos.z * 10;
+    let color, alpha, label;
+
+    if (layerKey === "clouds") {
+      const c = pt.clouds / 100;
+      color = `rgba(180,200,255,${c * 0.8})`;
+      alpha = c;
+      label = pt.clouds > 50 ? "☁" : pt.clouds > 20 ? "🌤" : "☀";
+    } else if (layerKey === "precipitation") {
+      const r = Math.min(pt.rain / 10, 1);
+      color = `rgba(0,100,255,${0.3 + r * 0.7})`;
+      alpha = pt.rain > 0 ? 0.8 : 0.1;
+      label = pt.rain > 5 ? "⛈" : pt.rain > 0 ? "🌧" : "🌂";
+    } else if (layerKey === "wind") {
+      const w = Math.min(pt.wind / 20, 1);
+      const r = Math.round(w * 255);
+      const b = Math.round((1-w) * 200);
+      color = `rgba(${r},50,${b},0.7)`;
+      alpha = 0.5 + w * 0.5;
+      label = pt.wind > 15 ? "💨" : pt.wind > 7 ? "🌬" : "〰";
+    } else if (layerKey === "temp") {
+      // Blue (cold) → Green → Red (hot)
+      const t = (pt.temp + 20) / 60; // -20 to 40°C range
+      const clamped = Math.max(0, Math.min(1, t));
+      const r = Math.round(clamped > 0.5 ? 255 : clamped * 2 * 255);
+      const g = Math.round(clamped < 0.25 ? 0 : clamped < 0.75 ? 255 : (1-clamped)*4*255);
+      const b = Math.round(clamped < 0.5 ? (1-clamped*2)*255 : 0);
+      color = `rgba(${r},${g},${b},0.75)`;
+      alpha = 0.7;
+      label = `${Math.round(pt.temp)}°`;
+    } else if (layerKey === "pressure") {
+      const p = (pt.pressure - 970) / 60;
+      const clamped = Math.max(0, Math.min(1, p));
+      color = `rgba(${Math.round(clamped*200)},${Math.round(100+clamped*100)},255,0.65)`;
+      alpha = 0.6;
+      label = pt.pressure > 1015 ? "🔵" : "🔴";
+    }
+
+    if (alpha < 0.05) return;
+
+    // Draw glow circle
+    const grad = weatherCtx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, size * 2.5);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    weatherCtx.beginPath();
+    weatherCtx.arc(pos.x, pos.y, size * 2.5, 0, Math.PI * 2);
+    weatherCtx.fillStyle = grad;
+    weatherCtx.fill();
+
+    // Draw emoji label
+    weatherCtx.font = `${Math.round(size)}px serif`;
+    weatherCtx.textAlign = "center";
+    weatherCtx.textBaseline = "middle";
+    weatherCtx.fillText(label, pos.x, pos.y);
+
+    // Temperature: also draw numeric value
+    if (layerKey === "temp") {
+      weatherCtx.font = `bold ${Math.round(size * 0.7)}px monospace`;
+      weatherCtx.fillStyle = "rgba(255,255,255,0.9)";
+      weatherCtx.fillText(`${Math.round(pt.temp)}°C`, pos.x, pos.y + size + 4);
+    }
+
+    // Wind: draw direction arrow
+    if (layerKey === "wind" && pt.wind > 3) {
+      const angleRad = (pt.windDeg - 90) * Math.PI / 180;
+      const arrowLen = size * 1.5;
+      weatherCtx.beginPath();
+      weatherCtx.moveTo(pos.x, pos.y);
+      weatherCtx.lineTo(
+        pos.x + Math.cos(angleRad) * arrowLen,
+        pos.y + Math.sin(angleRad) * arrowLen
+      );
+      weatherCtx.strokeStyle = "rgba(255,255,255,0.8)";
+      weatherCtx.lineWidth = 2;
+      weatherCtx.stroke();
+    }
+  });
+}
+
+// ── Animate — redraw as globe rotates ─────────────────────
+let weatherData = [];
+function animateWeather() {
+  if (!weatherActive) return;
+  drawWeatherLayer(weatherData, activeWeatherLayer);
+  weatherAnimFrame = requestAnimationFrame(animateWeather);
+}
+
+// ── Show/hide weather legend ───────────────────────────────
+function updateWeatherLegend(show) {
+  let legend = document.getElementById("weather-legend");
+  if (!show) { if (legend) legend.style.display = "none"; return; }
+  if (!legend) {
+    legend = document.createElement("div");
+    legend.id = "weather-legend";
+    legend.style.cssText = `
+      position: fixed; bottom: 80px; left: 12px;
+      background: rgba(10,14,26,0.92); border: 1px solid rgba(0,238,255,0.2);
+      border-radius: 10px; padding: 10px 12px; z-index: 20; min-width: 180px;
+      backdrop-filter: blur(12px); color: #cde;
+    `;
+    document.body.appendChild(legend);
+  }
+  const layer = WEATHER_LAYERS[activeWeatherLayer];
+  legend.style.display = "block";
+  legend.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:#00eeff;margin-bottom:8px;letter-spacing:1px">WEATHER LAYER</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+      ${Object.entries(WEATHER_LAYERS).map(([k,v]) => `
+        <button onclick="switchWeatherLayer('${k}')" style="
+          padding:4px 8px; border-radius:6px; border:1px solid rgba(0,238,255,${k===activeWeatherLayer?'0.8':'0.2'});
+          background:rgba(0,238,255,${k===activeWeatherLayer?'0.15':'0.04'}); color:#cde;
+          font-size:11px; cursor:pointer;">
+          ${v.label}
+        </button>`).join("")}
+    </div>
+    <div id="weather-status" style="font-size:11px;color:rgba(200,220,240,0.6)">
+      ${weatherData.length > 0 ? `✅ ${weatherData.length} weather stations` : "⏳ Loading weather..."}
+    </div>
+  `;
+}
+
+window.switchWeatherLayer = function(key) {
+  activeWeatherLayer = key;
+  updateWeatherLegend(true);
+};
+
+// ── Main toggle ────────────────────────────────────────────
+async function toggleWeatherLayer(enabled) {
+  weatherActive = enabled;
+  initWeatherCanvas();
+
+  if (!enabled) {
+    cancelAnimationFrame(weatherAnimFrame);
+    weatherCanvas.style.opacity = "0";
+    updateWeatherLegend(false);
+    return;
+  }
+
+  weatherCanvas.style.opacity = "1";
+  updateWeatherLegend(true);
+
+  if (weatherData.length === 0) {
+    console.log("🌤 Fetching weather data...");
+    weatherData = await fetchWeatherGrid();
+    console.log(`✅ Got weather for ${weatherData.length} cities`);
+    updateWeatherLegend(true);
+  }
+
+  animateWeather();
+}
+
+// ── Wire up the Layers panel toggle ───────────────────────
+document.getElementById("layer-weather")?.addEventListener("change", e => {
+  toggleWeatherLayer(e.target.checked);
+});
