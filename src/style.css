@@ -33,11 +33,25 @@ html, body {
   overflow: hidden;
 }
 
-/* ── Globe canvas ─────────────────────────────────────────────── */
-#chartdiv {
-  position: absolute;
-  inset: 0;
+/* ── Base reset for mobile globe rendering ─────────────────────── */
+html, body {
+  margin: 0; padding: 0;
   width: 100%; height: 100%;
+  overflow: hidden;
+  background: #0a0e1a;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+
+#chartdiv {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 0;
+  background: #0a0e1a;
 }
 
 /* ── Starfield ────────────────────────────────────────────────── */

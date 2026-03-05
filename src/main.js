@@ -93,6 +93,15 @@ function updateFilterBadge() {
 //  GLOBE SETUP
 // ═══════════════════════════════════════════════════════════
 const root = am5.Root.new("chartdiv");
+
+// Force resize after short delay — fixes mobile blank globe on first load
+setTimeout(() => { root.dom.style.width = "100%"; window.dispatchEvent(new Event("resize")); }, 300);
+setTimeout(() => { window.dispatchEvent(new Event("resize")); }, 800);
+
+// Re-render on orientation change (mobile)
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 400);
+});
 root.setThemes([am5themes_Animated.new(root)]);
 
 const chart = root.container.children.push(
