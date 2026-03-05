@@ -1764,15 +1764,15 @@ function parseSkyScanner(data) {
     const durStr   = duration  ? `${Math.floor(duration/60)}h ${duration%60}m` : "—";
 
     const priceNum = typeof price === "number" ? price : parseFloat(String(price).replace(/[^0-9.]/g,"")) || 0;
-    // Google Flights already returns INR — no ×84 conversion needed
+    // All prices are in INR (Google Flights returns INR, mock data is also in INR)
     const priceFmt = priceNum
-      ? `₹${Math.round(isGoogleData ? priceNum : priceNum * 84).toLocaleString("en-IN")}`
+      ? `₹${Math.round(priceNum).toLocaleString("en-IN")}`
       : "Price N/A";
 
     return {
       carrier, logoUrl, flightNum, aircraft,
       deptTime, arrTime, durStr, stops,
-      priceFmt, priceNum: isGoogleData ? priceNum : priceNum * 84,
+      priceFmt, priceNum: Math.round(priceNum),
       durationRaw: duration, departureRaw: departure,
       isBest: !!it.isBest,
       carbon: it.carbon || "",
@@ -1932,6 +1932,22 @@ document.getElementById("fs-search-btn")?.addEventListener("click", async () => 
 
     if (data?.error) {
       throw new Error(data.error);
+    }
+
+    // No flights found for this route (not a mock — real API returned empty)
+    if (data?.noResults) {
+      const ew = document.getElementById("fs-error-wrap");
+      const em = document.getElementById("fs-error-msg");
+      const rw = document.getElementById("fs-results-wrap");
+      if (em) em.innerHTML = `✈ ${data.message || "No flights found for this route or date."}`;
+      if (ew) {
+        ew.style.display     = "block";
+        ew.style.background  = "rgba(0,180,255,0.07)";
+        ew.style.borderColor = "rgba(0,180,255,0.25)";
+        em.style.color       = "#88ddff";
+      }
+      if (rw) rw.style.display = "none";
+      return;
     }
 
     const results = parseSkyScanner(data);
