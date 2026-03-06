@@ -1750,11 +1750,12 @@ const fsOverlay = document.getElementById("flight-search-overlay");
 const openFlightSearch = () => {
   if (fsOverlay) fsOverlay.classList.add("visible");
   document.getElementById("mobile-menu")?.classList.remove("open");
+  // Scroll modal to top
+  document.getElementById("flight-search-modal")?.scrollTo(0, 0);
 };
 
 document.getElementById("btn-flight-search")?.addEventListener("click", openFlightSearch);
 document.getElementById("mob-fs-btn")?.addEventListener("click", openFlightSearch);
-document.getElementById("fab-search")?.addEventListener("click", openFlightSearch);
 
 document.getElementById("fs-close")?.addEventListener("click", () => {
   if (fsOverlay) fsOverlay.classList.remove("visible");
@@ -1881,6 +1882,8 @@ function renderFlightResults(results) {
 
   const sorted = sortResults(results);
   wrapEl.style.display = "block";
+  const sortBar = document.getElementById("fs-sort-bar");
+  if (sortBar) sortBar.style.display = "flex";
   if (titleEl) titleEl.textContent = `${sorted.length} flight${sorted.length !== 1 ? "s" : ""} found`;
 
   if (!sorted.length) {
