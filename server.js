@@ -42,8 +42,97 @@ app.use(cors({ origin: process.env.FRONTEND_URL || "*" }));
 app.use(express.json());
 
 // ── Instant health check — must be FIRST for Railway startup probe ──
-app.get("/health", (_, res) => res.status(200).send("OK"));
-app.get("/ping",   (_, res) => res.status(200).send("pong"));
+app.get("/privacy", (_, res) => {
+  res.setHeader("Content-Type", "text/html");
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — LiveFlights</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e1a; color: #c8d8e8; line-height: 1.7; }
+  .header { background: linear-gradient(135deg, #0a0e1a, #0d1a2e); padding: 32px 24px; border-bottom: 1px solid rgba(0,180,255,0.15); text-align: center; }
+  .header h1 { font-size: 28px; color: #fff; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .header p  { color: rgba(150,190,230,0.7); margin-top: 6px; font-size: 14px; }
+  .container { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+  h2 { color: #00eeff; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; margin: 32px 0 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(0,180,255,0.15); }
+  p  { margin-bottom: 12px; color: rgba(180,210,240,0.85); font-size: 15px; }
+  ul { margin: 8px 0 14px 20px; }
+  li { margin-bottom: 6px; color: rgba(180,210,240,0.85); font-size: 15px; }
+  a  { color: #00eeff; }
+  .updated { background: rgba(0,100,200,0.1); border: 1px solid rgba(0,150,255,0.2); border-radius: 8px; padding: 12px 16px; margin-bottom: 28px; font-size: 13px; color: rgba(150,190,230,0.7); }
+  .contact { background: rgba(0,20,50,0.5); border: 1px solid rgba(0,100,200,0.2); border-radius: 12px; padding: 20px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>✈ LiveFlights — Privacy Policy</h1>
+  <p>Real-time Flight Tracker</p>
+</div>
+<div class="container">
+  <div class="updated">Last updated: March 2026 &nbsp;·&nbsp; Effective immediately</div>
+
+  <p>LiveFlights ("we", "our", or "us") is committed to protecting your privacy. This policy explains what information we collect, how we use it, and your rights.</p>
+
+  <h2>1. Information We Collect</h2>
+  <p>We collect the following types of information:</p>
+  <ul>
+    <li><strong>Location data</strong> — Only when you use the "Nearby Flights" feature and only with your explicit permission. We do not store or transmit your location to our servers.</li>
+    <li><strong>Usage data</strong> — Anonymous app usage statistics such as which features are used. No personally identifiable information is collected.</li>
+    <li><strong>Flight search queries</strong> — When you search for flights, your origin/destination airports and date are sent to our server to fetch results. These are not linked to your identity and are not stored.</li>
+  </ul>
+
+  <h2>2. Information We Do NOT Collect</h2>
+  <ul>
+    <li>We do not collect your name, email address, or any account information</li>
+    <li>We do not require you to create an account</li>
+    <li>We do not collect payment information</li>
+    <li>We do not track you across other apps or websites</li>
+    <li>We do not sell your data to third parties</li>
+  </ul>
+
+  <h2>3. Third-Party Services</h2>
+  <p>LiveFlights uses the following third-party services to provide functionality:</p>
+  <ul>
+    <li><strong>OpenSky Network</strong> — Provides live flight position data. Subject to their <a href="https://opensky-network.org/about/privacy-policy" target="_blank">privacy policy</a>.</li>
+    <li><strong>OpenWeatherMap</strong> — Provides live weather tile data. Subject to their <a href="https://openweathermap.org/privacy-policy" target="_blank">privacy policy</a>.</li>
+    <li><strong>Google Flights</strong> — Flight booking is handled externally by Google. Subject to <a href="https://policies.google.com/privacy" target="_blank">Google's privacy policy</a>.</li>
+    <li><strong>amCharts</strong> — Powers the 3D globe visualization. No personal data is shared.</li>
+  </ul>
+
+  <h2>4. Location Permission</h2>
+  <p>The app requests location access only for the "Nearby Flights" feature to show flights near you. Location is used solely within the app and is never transmitted to our servers or shared with third parties. You can deny this permission and still use all other features of the app.</p>
+
+  <h2>5. Internet Permission</h2>
+  <p>The app requires internet access to fetch live flight data, weather information, and flight search results. No personal data is transmitted during normal use.</p>
+
+  <h2>6. Data Retention</h2>
+  <p>We do not store personal data on our servers. Flight search queries are processed in real-time and discarded immediately. Server logs (IP address, request path) may be retained for up to 7 days for security and debugging purposes only.</p>
+
+  <h2>7. Children's Privacy</h2>
+  <p>LiveFlights is not directed at children under 13. We do not knowingly collect personal information from children. If you believe we have inadvertently collected such information, please contact us.</p>
+
+  <h2>8. Changes to This Policy</h2>
+  <p>We may update this privacy policy from time to time. Changes will be posted at this URL. Continued use of the app after changes constitutes acceptance of the updated policy.</p>
+
+  <h2>9. Your Rights</h2>
+  <p>Since we do not collect personal data, there is no personal data to access, correct, or delete. If you have any concerns, please contact us and we will respond within 30 days.</p>
+
+  <div class="contact">
+    <h2 style="margin-top:0; border:none;">10. Contact Us</h2>
+    <p style="margin-bottom:0">If you have questions about this privacy policy, please contact us at:<br>
+    <strong style="color:#00eeff">Developer: Srikanth Nagalla</strong><br>
+    App: LiveFlights — Real-time Flight Tracker<br>
+    Available on Google Play Store</p>
+  </div>
+</div>
+</body>
+</html>`);
+});
+
+
 
 app.use("/api/flights", rateLimit({ windowMs: 15000, max: 10 }));
 
@@ -559,20 +648,29 @@ app.get("/api/searchFlights", async (req, res) => {
 
     if (!Array.isArray(items) || !items.length) {
       console.warn("   No results from Apify — raw:", text.substring(0, 400));
-      return res.json({ ...buildMockResults(fromCode, toCode, date, cabinClass, parseInt(adults)||1), isMock: true, debugReason: "no_results_from_actor" });
+      return res.json({
+        isMock: false,
+        noResults: true,
+        flights: [],
+        debugReason: `no_flights_found:${fromCode}-${toCode}`,
+        message: `No flights found from ${fromCode} to ${toCode} on this date. Try a nearby major airport or different date.`
+      });
     }
 
     // ── Parse Apify Google Flights response ───────────────────────
-    // Response shape: items[0] = { best_flights: [...], other_flights: [...] }
-    // Each entry: { flights: [{departure_airport, arrival_airport, duration, airline, ...}], price, total_duration, airline_logo }
     const page = items[0];
     const bestFlights  = Array.isArray(page?.best_flights)  ? page.best_flights  : [];
     const otherFlights = Array.isArray(page?.other_flights) ? page.other_flights : [];
     const allFlights   = [...bestFlights, ...otherFlights];
 
     if (!allFlights.length) {
-      console.warn("   No flights in best_flights or other_flights → mock");
-      return res.json({ ...buildMockResults(fromCode, toCode, date, cabinClass, parseInt(adults)||1), isMock: true, debugReason: "no_flights_in_response" });
+      console.warn("   No flights in best_flights or other_flights");
+      return res.json({
+        isMock: false,
+        noResults: true,
+        flights: [],
+        message: `No flights found from ${fromCode} to ${toCode}. This route may not have direct service — try searching via a hub airport.`
+      });
     }
 
     console.log(`   ✓ ${bestFlights.length} best + ${otherFlights.length} other = ${allFlights.length} total flights`);
