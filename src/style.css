@@ -2069,19 +2069,35 @@ z-index:50;
   border-radius: 12px;
   transition: all 0.2s;
   position: relative;
+  overflow: visible; /* allow badges to show above card */
 }
 .fs-result-card:hover { border-color: rgba(0,160,255,0.4); background: rgba(0,30,70,0.6); }
 .fs-best { border-color: rgba(0,200,100,0.4) !important; background: rgba(0,30,20,0.5) !important; }
+/* Cards with badges need extra top space */
+.fs-result-card:has(.fs-best-badge),
+.fs-result-card:has(.fs-delay-badge) { margin-top: 8px; }
 .fs-best-badge {
-  position: absolute; top: -10px; left: 12px;
+  position: absolute; top: -11px; left: 12px;
   background: #00a050; color: #fff;
   font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 10px;
+  white-space: nowrap;
+  z-index: 2;
 }
 .fs-delay-badge {
-  position: absolute; top: -10px; right: 12px;
-  background: rgba(255,120,0,0.8); color: #fff;
-  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  position: absolute; top: -11px; right: 12px;
+  background: rgba(255,120,0,0.9); color: #fff;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Allow badges to overflow the list container */
+.fs-results-list {
+  display: flex; flex-direction: column; gap: 10px;
+  overflow: visible;
+  padding-top: 6px;
 }
 
 /* Card sections */
@@ -2183,10 +2199,38 @@ z-index:50;
   .fs-route-row { flex-direction: column; gap: 8px; }
   .fs-swap-btn { transform: rotate(90deg); align-self: center; margin: -4px 0; }
   .fs-details-row { flex-direction: column; gap: 8px; }
+
+  /* Mobile card: stack left info + right price/book vertically */
+  .fs-result-card {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 12px;
+    align-items: flex-start;
+  }
   .fs-card-mid { display: none; }
-  .fs-result-card { flex-wrap: wrap; gap: 10px; }
-  .fs-card-left { min-width: unset; flex: 1; }
-  .fs-card-right { flex: 1; align-items: flex-start; }
-  .fs-price { font-size: 20px; }
-  .fs-book-btn { width: 100%; padding: 10px; text-align: center; }
+  .fs-card-left {
+    min-width: unset;
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .fs-airline-name { font-size: 14px; }
+  .fs-flight-num {
+    font-size: 12px;
+    white-space: normal; /* allow wrapping so "Airbus A320neo" shows fully */
+    word-break: break-word;
+  }
+  .fs-card-right {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .fs-price { font-size: 22px; }
+  .fs-price-sub { display: none; }
+  .fs-book-btn {
+    flex: 0 0 auto;
+    padding: 10px 24px;
+    font-size: 14px;
+  }
 }
