@@ -2019,6 +2019,12 @@ document.getElementById("fs-search-btn")?.addEventListener("click", async () => 
     }
 
     renderFlightResults(results);
+    // Scroll results into view (important on mobile)
+    setTimeout(() => {
+      const modal = document.getElementById("flight-search-modal");
+      const resultsEl = document.getElementById("fs-results-wrap");
+      if (modal && resultsEl) modal.scrollTo({ top: resultsEl.offsetTop - 60, behavior: "smooth" });
+    }, 100);
   } catch (err) {
     console.error("Flight search error:", err);
     showFsError(`Search failed: ${err.message}. Check your APIFY_TOKEN in .env`);
