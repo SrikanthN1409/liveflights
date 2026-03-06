@@ -978,6 +978,24 @@ body::before {
   #alt-legend-panel { display: none; }
   #mini-stats { bottom: 76px; }
 
+  /* Hide these buttons on mobile — they live in the hamburger menu */
+  #btn-filters, #btn-layers, #btn-stats, #btn-nearby, #flight-count { display: none !important; }
+
+  /* Flights button — always visible on mobile, prominent */
+  #btn-flight-search {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(135deg, rgba(0,80,200,0.5), rgba(0,140,255,0.35)) !important;
+    border-color: rgba(0,180,255,0.5) !important;
+    color: #00ddff !important;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  /* Show text label for Flights button on mobile */
+  #btn-flight-search .bar-btn-text { display: inline !important; }
+
   #flight-panel {
     top: auto;
     bottom: -70vh;        /* hidden below screen by default */
