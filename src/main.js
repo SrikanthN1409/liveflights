@@ -2346,10 +2346,10 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 // Hit counter using countapi.xyz (free, no signup)
 (async () => {
   try {
-    const res = await fetch("https://api.countapi.xyz/hit/liveflights.srikanth/visits");
-    const data = await res.json();
-    const el = document.getElementById("hit-count");
-    if (el && data.value) el.textContent = Number(data.value).toLocaleString();
+   const res = await fetch("https://api.counterapi.dev/v1/liveflights-srikanth/visits/up");
+const data = await res.json();
+const el = document.getElementById("hit-count");
+if (el && data.count != null) el.textContent = Number(data.count).toLocaleString();
   } catch {
     const el = document.getElementById("hit-count");
     if (el) el.textContent = "—";
