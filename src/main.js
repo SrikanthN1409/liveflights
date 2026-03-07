@@ -634,24 +634,111 @@ function showFlightPanel(d) {
   selectedHex = d.hex;
   const c = planeColor(d);
 
-  document.getElementById("fp-flight").textContent   = d.flight   || d.hex    || "N/A";
-  document.getElementById("fp-alt-val").textContent  = d.alt  != null ? `${Math.round(d.alt).toLocaleString()}` : "—";
-  document.getElementById("fp-spd-val").textContent  = d.spd  != null ? `${Math.round(d.spd)}` : "—";
-  document.getElementById("fp-hdg-val").textContent  = d.hdg  != null ? `${Math.round(d.hdg)}°` : "—";
-  document.getElementById("fp-alt-val").style.color  = `#${c.fill.toString(16).padStart(6,"0")}`;
+  const flight = d.flight?.trim() || d.hex || "N/A";
+  document.getElementById("fp-flight").textContent  = flight;
+  document.getElementById("fp-alt-val").textContent = d.alt != null ? `${Math.round(d.alt).toLocaleString()}` : "—";
+  document.getElementById("fp-spd-val").textContent = d.spd != null ? `${Math.round(d.spd)}` : "—";
+  document.getElementById("fp-hdg-val").textContent = d.hdg != null ? `${Math.round(d.hdg)}°` : "—";
+  document.getElementById("fp-alt-val").style.color = `#${c.fill.toString(16).padStart(6,"0")}`;
 
-  document.getElementById("fp-type").textContent       = d.type    || "Unknown";
-  document.getElementById("fp-reg").textContent        = d.reg     || "N/A";
-  document.getElementById("fp-squawk").textContent     = d.squawk  || "N/A";
-  document.getElementById("fp-datasource").textContent = d.source  || "—";
+  document.getElementById("fp-type").textContent       = d.type   || "Unknown";
+  document.getElementById("fp-reg").textContent        = d.reg    || "N/A";
+  document.getElementById("fp-squawk").textContent     = d.squawk || "N/A";
+  document.getElementById("fp-datasource").textContent = d.source || "—";
   document.getElementById("fp-src-badge").textContent  = d.source === "adsb" ? "ADS-B" : d.source === "opensky" ? "OpenSky" : "LIVE";
+
+  // Lat / Lon
+  const latEl = document.getElementById("fp-lat");
+  const lonEl = document.getElementById("fp-lon");
+  if (latEl) latEl.textContent = d.lat != null ? d.lat.toFixed(4) + "°" : "—";
+  if (lonEl) lonEl.textContent = d.lon != null ? d.lon.toFixed(4) + "°" : "—";
+
+  // Airline name from ICAO/IATA prefix
+  const airlineMap = {
+    "AI":"Air India","6E":"IndiGo","UK":"Vistara","SG":"SpiceJet","QP":"Akasa Air",
+    "IX":"Air India Express","G8":"Go First","I5":"Air Asia India",
+    "EK":"Emirates","QR":"Qatar Airways","EY":"Etihad","BA":"British Airways",
+    "LH":"Lufthansa","AF":"Air France","KL":"KLM","TK":"Turkish Airlines",
+    "SQ":"Singapore Airlines","CX":"Cathay Pacific","MH":"Malaysia Airlines",
+    "TG":"Thai Airways","FD":"Thai AirAsia","AK":"AirAsia","QZ":"AirAsia Indonesia",
+    "AA":"American Airlines","UA":"United Airlines","DL":"Delta Airlines",
+    "WN":"Southwest","B6":"JetBlue","AS":"Alaska Airlines",
+    "CA":"Air China","MU":"China Eastern","CZ":"China Southern",
+    "JL":"Japan Airlines","NH":"ANA","KE":"Korean Air","OZ":"Asiana",
+    "SV":"Saudia","GF":"Gulf Air","WY":"Oman Air","FZ":"flydubai",
+    "G9":"Air Arabia","XY":"Flynas","ET":"Ethiopian Airlines","MS":"EgyptAir",
+    "SA":"South African","LX":"Swiss","OS":"Austrian","SK":"SAS",
+    "AY":"Finnair","IB":"Iberia","VY":"Vueling","U2":"easyJet",
+    "FR":"Ryanair","W6":"Wizz Air","AIQ":"Thai AirAsia X","XJ":"Thai AirAsia X",
+    "6P":"IndiGo","IC":"Indian Airlines","9W":"Jet Airways","S2":"SpiceJet",
+    "QG":"Citilink","BI":"Royal Brunei","UL":"SriLankan","UX":"Air Europa",
+    "TP":"TAP Air Portugal","AZ":"ITA Airways","AV":"Avianca","LA":"LATAM",
+    "CM":"Copa Airlines","AM":"Aeromexico","AC":"Air Canada","WS":"WestJet",
+  };
+  const p2 = flight.substring(0,2).toUpperCase();
+  const p3 = flight.substring(0,3).toUpperCase();
+  const airlineName = airlineMap[p3] || airlineMap[p2] || "";
+  const airlineEl = document.getElementById("fp-airline-name");
+  if (airlineEl) airlineEl.textContent = airlineName || (d.reg ? d.reg : "Unknown Airline");
+
+  // Airline logo
+  const logoEl = document.getElementById("fp-airline-logo");
+  if (logoEl) {
+    const code = airlineMap[p2] ? p2 : (airlineMap[p3] ? p3 : null);
+    if (code) {
+      logoEl.src = `https://logos.skyscnr.com/images/airlines/favicon/${code}.png`;
+      logoEl.style.display = "inline-block";
+      logoEl.onerror = () => { logoEl.style.display = "none"; };
+    } else {
+      logoEl.style.display = "none";
+    }
+  }
 
   // Route bar
   const originParts = (d.origin || "").split(" ");
-  document.getElementById("fp-origin-code").textContent = originParts[0] || "—";
-  document.getElementById("fp-origin-name").textContent = originParts.slice(1).join(" ") || "Origin";
-  document.getElementById("fp-dest-code").textContent   = d.dest  || "—";
-  document.getElementById("fp-dest-name").textContent   = d.dest  ? "Destination" : "Unknown";
+  const originCode  = originParts[0] || "—";
+  const originName  = originParts.slice(1).join(" ") || "Origin";
+  document.getElementById("fp-origin-code").textContent = originCode;
+  document.getElementById("fp-origin-name").textContent = originName;
+  document.getElementById("fp-dest-code").textContent   = d.dest || "—";
+  document.getElementById("fp-dest-name").textContent   = d.dest ? "Destination" : "Unknown";
+
+  // Flight progress bar (distance-based estimate)
+  const progressWrap = document.getElementById("fp-progress-wrap");
+  const originAirport = originCode !== "—" ? findAirportCoords(originCode) : null;
+  const destAirport   = d.dest ? findAirportCoords(d.dest.split(" ")[0]) : null;
+  if (originAirport && destAirport && d.lat != null && d.lon != null && progressWrap) {
+    const totalDist = haversineKm(originAirport.lat, originAirport.lon, destAirport.lat, destAirport.lon);
+    const flownDist = haversineKm(originAirport.lat, originAirport.lon, d.lat, d.lon);
+    const pct       = Math.min(100, Math.max(0, (flownDist / totalDist) * 100));
+    const fill      = document.getElementById("fp-progress-fill");
+    const planeDot  = document.getElementById("fp-progress-plane");
+    if (fill)     fill.style.width  = `${pct}%`;
+    if (planeDot) planeDot.style.left = `calc(${pct}% - 8px)`;
+    if (d.spd && d.spd > 50) {
+      const spdKmH   = d.spd * 1.852;
+      const remMins  = Math.round((Math.max(0, totalDist - flownDist) / spdKmH) * 60);
+      const elapMins = Math.round((flownDist / spdKmH) * 60);
+      const fmt      = m => `${Math.floor(m/60)}h ${m%60}m`;
+      const elEl = document.getElementById("fp-elapsed");
+      const rmEl = document.getElementById("fp-remaining");
+      if (elEl) elEl.textContent = `${fmt(elapMins)} elapsed`;
+      if (rmEl) rmEl.textContent = `${fmt(remMins)} remaining`;
+    }
+    progressWrap.style.display = "block";
+  } else if (progressWrap) {
+    progressWrap.style.display = "none";
+  }
+
+  // External links
+  const faLink = document.getElementById("fp-fa-link");
+  const frLink = document.getElementById("fp-fr-link");
+  const psLink = document.getElementById("fp-ps-link");
+  if (faLink) faLink.href = `https://www.flightaware.com/live/flight/${flight}`;
+  if (frLink) frLink.href = `https://www.flightradar24.com/${flight}`;
+  if (psLink) psLink.href = d.reg
+    ? `https://www.planespotters.net/search?q=${d.reg.trim()}`
+    : `https://www.planespotters.net/search?q=${flight}`;
 
   panel.classList.add("visible");
   drawArc(d);
@@ -659,22 +746,28 @@ function showFlightPanel(d) {
 
   if (!trackingMode) {
     autoRotate = false;
-    // If we have a full route, centre the globe on the midpoint of the route
-    const originCode = (d.origin || "").trim().split(/[\s,\/]/)[0].toUpperCase();
-    const destCode   = (d.dest   || "").trim().split(/[\s,\/]/)[0].toUpperCase();
-    const originApt  = originCode ? findAirportCoords(originCode) : null;
-    const destApt    = destCode   ? findAirportCoords(destCode)   : null;
-
+    const oCode  = (d.origin || "").trim().split(/[\s,\/]/)[0].toUpperCase();
+    const dCode  = (d.dest   || "").trim().split(/[\s,\/]/)[0].toUpperCase();
+    const oApt   = oCode ? findAirportCoords(oCode) : null;
+    const dApt   = dCode ? findAirportCoords(dCode) : null;
     let targetLat = d.lat, targetLon = d.lon;
-    if (originApt?.lat != null && destApt?.lat != null) {
-      // Centre on route midpoint for best full-route view
-      targetLat = (originApt.lat + destApt.lat) / 2;
-      targetLon = (originApt.lon + destApt.lon) / 2;
+    if (oApt?.lat != null && dApt?.lat != null) {
+      targetLat = (oApt.lat + dApt.lat) / 2;
+      targetLon = (oApt.lon + dApt.lon) / 2;
     }
     chart.animate({ key: "rotationX", to: -targetLon, duration: 900, easing: am5.ease.out(am5.ease.cubic) });
     chart.animate({ key: "rotationY", to: -targetLat, duration: 900, easing: am5.ease.out(am5.ease.cubic) });
     setTimeout(() => { autoRotate = true; }, 4500);
   }
+}
+
+// Haversine distance in km
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 panelClose?.addEventListener("click", () => {

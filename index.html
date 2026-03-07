@@ -223,11 +223,20 @@
   <div id="flight-panel">
     <div class="fp-header">
       <div class="fp-callsign-wrap">
-        <span id="fp-flight">—</span>
+        <div class="fp-airline-logo-wrap">
+          <img id="fp-airline-logo" src="" alt="" style="display:none;width:28px;height:28px;border-radius:5px;object-fit:contain;" />
+          <span id="fp-flight">—</span>
+        </div>
         <span class="fp-badge" id="fp-src-badge">LIVE</span>
       </div>
       <button id="panel-close">✕</button>
     </div>
+
+    <!-- Airline name -->
+    <div class="fp-airline-row">
+      <span id="fp-airline-name" class="fp-airline-name">—</span>
+    </div>
+
     <div class="fp-quick-stats">
       <div class="fp-qs"><div class="fp-qs-val" id="fp-alt-val">—</div><div class="fp-qs-lbl">ALT (ft)</div></div>
       <div class="fp-qs-sep"></div>
@@ -235,6 +244,7 @@
       <div class="fp-qs-sep"></div>
       <div class="fp-qs"><div class="fp-qs-val" id="fp-hdg-val">—</div><div class="fp-qs-lbl">HDG</div></div>
     </div>
+
     <div class="fp-route-bar">
       <div class="fp-apt-box"><div class="fp-apt-code" id="fp-origin-code">—</div><div class="fp-apt-name" id="fp-origin-name">Origin</div></div>
       <div class="fp-route-line">
@@ -244,10 +254,25 @@
       </div>
       <div class="fp-apt-box"><div class="fp-apt-code" id="fp-dest-code">—</div><div class="fp-apt-name" id="fp-dest-name">Destination</div></div>
     </div>
+
+    <!-- Flight progress bar -->
+    <div class="fp-progress-wrap" id="fp-progress-wrap" style="display:none">
+      <div class="fp-progress-bar">
+        <div class="fp-progress-fill" id="fp-progress-fill"></div>
+        <div class="fp-progress-plane" id="fp-progress-plane">✈</div>
+      </div>
+      <div class="fp-progress-labels">
+        <span id="fp-elapsed">—</span>
+        <span id="fp-remaining">—</span>
+      </div>
+    </div>
+
     <div class="fp-divider"></div>
     <div class="fp-row"><span class="fp-label">Aircraft</span><span class="fp-val" id="fp-type">—</span></div>
     <div class="fp-row"><span class="fp-label">Registration</span><span class="fp-val" id="fp-reg">—</span></div>
     <div class="fp-row"><span class="fp-label">Squawk</span><span class="fp-val" id="fp-squawk">—</span></div>
+    <div class="fp-row"><span class="fp-label">Latitude</span><span class="fp-val" id="fp-lat">—</span></div>
+    <div class="fp-row"><span class="fp-label">Longitude</span><span class="fp-val" id="fp-lon">—</span></div>
     <div class="fp-row"><span class="fp-label">Source</span><span class="fp-val" id="fp-datasource">—</span></div>
     <div class="fp-divider"></div>
     <div class="fp-chart-label">ALTITUDE HISTORY</div>
@@ -255,6 +280,19 @@
     <div class="fp-actions">
       <button class="fp-act-btn" id="fp-track-btn">📍 Track</button>
       <button class="fp-act-btn" id="fp-copy-btn">📋 Copy</button>
+    </div>
+
+    <!-- External links -->
+    <div class="fp-ext-links">
+      <a id="fp-fa-link" href="#" target="_blank" class="fp-ext-btn fp-ext-fa">
+        ✈ FlightAware
+      </a>
+      <a id="fp-fr-link" href="#" target="_blank" class="fp-ext-btn fp-ext-fr">
+        📡 FlightRadar24
+      </a>
+      <a id="fp-ps-link" href="#" target="_blank" class="fp-ext-btn fp-ext-ps">
+        📷 Photo
+      </a>
     </div>
   </div>
 
