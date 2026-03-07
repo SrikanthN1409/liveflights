@@ -980,6 +980,10 @@ function applyFlightData(rawFlights) {
         if (hex) dataItemMap.set(hex, di);
       });
       isFirstLoad = false;
+      // Dismiss the loading overlay early since planes are now on the globe
+      if (typeof window.__dismissLoadingOverlay === "function") {
+        window.__dismissLoadingOverlay();
+      }
     }, 500);
     return;
   }

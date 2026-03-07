@@ -450,6 +450,190 @@
     <span id="footer-copy">© <span id="footer-year"></span> Srikanth Nagalla · LiveFlights</span>
   </div>
 
+  <!-- ── Loading Overlay ──────────────────────────────────────── -->
+  <div id="loading-overlay">
+    <div class="lo-content">
+      <div class="lo-plane">✈</div>
+      <div class="lo-title">LiveFlights</div>
+      <div class="lo-subtitle">Fetching live flight data from around the globe…</div>
+      <div class="lo-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="lo-ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="lo-ring-fill" cx="50" cy="50" r="42" id="lo-ring-fill"/>
+        </svg>
+        <div class="lo-count" id="lo-count">15</div>
+      </div>
+      <div class="lo-msg" id="lo-msg">Loading planes onto the globe…</div>
+      <div class="lo-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <style>
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: radial-gradient(ellipse at center, #0a1929 0%, #020810 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #loading-overlay.lo-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .lo-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      font-family: 'DM Sans', 'JetBrains Mono', sans-serif;
+    }
+    .lo-plane {
+      font-size: 2.8rem;
+      animation: lo-fly 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px #38bdf8);
+    }
+    @keyframes lo-fly {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50%       { transform: translateY(-12px) rotate(5deg); }
+    }
+    .lo-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f0f9ff;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .lo-subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      max-width: 280px;
+      line-height: 1.5;
+    }
+    .lo-ring {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin: 8px 0 4px;
+    }
+    .lo-ring svg {
+      width: 130px;
+      height: 130px;
+      transform: rotate(-90deg);
+    }
+    .lo-ring-bg {
+      fill: none;
+      stroke: rgba(56,189,248,0.12);
+      stroke-width: 6;
+    }
+    .lo-ring-fill {
+      fill: none;
+      stroke: #38bdf8;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+      filter: drop-shadow(0 0 6px #38bdf8);
+    }
+    .lo-count {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lo-msg {
+      font-size: 0.82rem;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+      min-height: 20px;
+      transition: opacity 0.4s;
+    }
+    .lo-dots {
+      display: flex;
+      gap: 7px;
+      margin-top: 4px;
+    }
+    .lo-dots span {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      opacity: 0.3;
+      animation: lo-pulse 1.2s ease-in-out infinite;
+    }
+    .lo-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .lo-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes lo-pulse {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50%       { opacity: 1;   transform: scale(1.3); }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const overlay  = document.getElementById("loading-overlay");
+      const countEl  = document.getElementById("lo-count");
+      const msgEl    = document.getElementById("lo-msg");
+      const ringFill = document.getElementById("lo-ring-fill");
+      const TOTAL    = 15;
+      const CIRCUMFERENCE = 264;
+
+      const messages = [
+        "Connecting to live data feed…",
+        "Loading planes onto the globe…",
+        "Pulling ADS-B transponder data…",
+        "Plotting flight paths worldwide…",
+        "Almost there, rendering planes…",
+        "Hang tight — nearly ready! ✈"
+      ];
+
+      let seconds = TOTAL;
+      let dismissed = false;
+
+      function updateRing(remaining) {
+        const pct = remaining / TOTAL;
+        const offset = CIRCUMFERENCE * pct;
+        ringFill.style.strokeDashoffset = CIRCUMFERENCE - offset;
+      }
+
+      function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        overlay.classList.add("lo-hidden");
+      }
+
+      updateRing(TOTAL);
+
+      const tick = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+          clearInterval(tick);
+          countEl.textContent = "✓";
+          msgEl.textContent = "Planes loaded! Enjoy the view 🌍";
+          ringFill.style.stroke = "#22c55e";
+          setTimeout(dismiss, 800);
+          return;
+        }
+        countEl.textContent = seconds;
+        updateRing(seconds);
+        const mIdx = Math.floor((1 - seconds / TOTAL) * messages.length);
+        msgEl.textContent = messages[Math.min(mIdx, messages.length - 1)];
+      }, 1000);
+
+      // Also dismiss early if flights actually arrive
+      window.__dismissLoadingOverlay = dismiss;
+    })();
+  </script>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
