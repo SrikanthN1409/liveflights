@@ -12,7 +12,7 @@ import "./style.css";
 const IS_PROD   = window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
 const API_BASE  = IS_PROD ? `${window.location.protocol}//${window.location.host}` : "http://localhost:3000";
 const WS_URL    = IS_PROD ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}` : "ws://localhost:3000";
-const MAX_PLANES = 4000;
+const MAX_PLANES = 10000;
 const UPDATE_MS  = 4500;
 const PLANE_SVG  = "M0,-16 C1,-12 2,-8 2,-4 L14,4 L14,7 L2,3 L2,10 L5,12 L5,14 L0,13 L-5,14 L-5,12 L-2,10 L-2,3 L-14,7 L-14,4 L-2,-4 C-2,-8 -1,-12 0,-16 Z";
 
@@ -955,7 +955,7 @@ function applyFlightData(rawFlights) {
   visible.forEach(p => flightDataMap.set(p.hex, p));
 
   updateStats(rawFlights);
-  updateMiniStats(visible);
+  updateMiniStats(rawFlights);
 
   // If selected flight no longer visible, update panel anyway
   if (selectedHex && !flightDataMap.has(selectedHex)) {
@@ -1027,7 +1027,7 @@ function applyFlightData(rawFlights) {
 //  STATS
 // ═══════════════════════════════════════════════════════════
 function updateMiniStats(flights) {
-  const inAir  = flights.filter(f => f.alt > 0).length;
+  const inAir  = flights.filter(f => f.alt != null && f.alt > 100).length;
   const ground = flights.length - inAir;
   document.getElementById("flight-count").textContent = `${flights.length.toLocaleString()} flights`;
   const ea = document.getElementById("stat-inair");
@@ -1037,8 +1037,8 @@ function updateMiniStats(flights) {
 }
 
 function updateStats(flights) {
-  const inAir  = flights.filter(f => f.alt > 0);
-  const ground = flights.filter(f => f.alt <= 0);
+  const inAir  = flights.filter(f => f.alt != null && f.alt > 100);
+  const ground = flights.filter(f => f.alt == null || f.alt <= 100);
 
   const avgAlt = inAir.length ? Math.round(inAir.reduce((s, f) => s + f.alt, 0) / inAir.length) : 0;
   const avgSpd = inAir.length ? Math.round(inAir.reduce((s, f) => s + (f.spd || 0), 0) / inAir.length) : 0;
@@ -1049,7 +1049,7 @@ function updateStats(flights) {
   set("sc-airborne", inAir.length.toLocaleString());
   set("sc-ground",   ground.length.toLocaleString());
   set("sc-avgalt",   avgAlt.toLocaleString());
-  set("sc-avgspd",   avgSpd + " kts");
+  set("sc-avgspd",   avgSpd.toLocaleString());
   set("sc-highalt",  maxAlt.toLocaleString());
 
   // Altitude distribution bars
@@ -1095,23 +1095,6 @@ function updateStats(flights) {
       `<div class="top-type-row">
         <span class="top-type-name">${type}</span>
         <div class="top-type-bar-wrap"><div class="top-type-bar" style="width:${(count/maxT*100).toFixed(1)}%"></div></div>
-        <span class="top-type-count">${count}</span>
-       </div>`
-    ).join("");
-  }
-
-  // Sources
-  const srcEl = document.getElementById("top-sources");
-  if (srcEl) {
-    const srcCounts = {};
-    flights.forEach(f => { const s = f.source || "unknown"; srcCounts[s] = (srcCounts[s] || 0) + 1; });
-    const srcTop = Object.entries(srcCounts).sort((a,b) => b[1]-a[1]);
-    const maxS   = srcTop[0]?.[1] || 1;
-    const srcColors = { adsb: "#00eeff", opensky: "#aa88ff", unknown: "#aaaaaa" };
-    srcEl.innerHTML = srcTop.map(([src, count]) =>
-      `<div class="top-type-row">
-        <span class="top-type-name" style="color:${srcColors[src]||'#aaa'}">${src}</span>
-        <div class="top-type-bar-wrap"><div class="top-type-bar" style="width:${(count/maxS*100).toFixed(1)}%;background:${srcColors[src]||'#aaa'}"></div></div>
         <span class="top-type-count">${count}</span>
        </div>`
     ).join("");
@@ -2352,3 +2335,23 @@ async function toggleWeather(on) {
 document.getElementById("layer-weather")?.addEventListener("change", e => {
   toggleWeather(e.target.checked);
 });
+// ═══════════════════════════════════════════════════════════
+//  FOOTER — Hit counter + copyright year
+// ═══════════════════════════════════════════════════════════
+
+// Auto-update copyright year
+const yearEl = document.getElementById("footer-year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+// Hit counter using countapi.xyz (free, no signup)
+(async () => {
+  try {
+    const res = await fetch("https://api.countapi.xyz/hit/liveflights.srikanth/visits");
+    const data = await res.json();
+    const el = document.getElementById("hit-count");
+    if (el && data.value) el.textContent = Number(data.value).toLocaleString();
+  } catch {
+    const el = document.getElementById("hit-count");
+    if (el) el.textContent = "—";
+  }
+})();

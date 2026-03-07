@@ -139,7 +139,7 @@
       <div class="stat-card"><div class="sc-val green" id="sc-airborne">—</div><div class="sc-lbl">Airborne</div></div>
       <div class="stat-card"><div class="sc-val muted" id="sc-ground">—</div><div class="sc-lbl">Ground</div></div>
       <div class="stat-card"><div class="sc-val cyan" id="sc-avgalt">—</div><div class="sc-lbl">Avg Alt (ft)</div></div>
-      <div class="stat-card"><div class="sc-val yellow" id="sc-avgspd">—</div><div class="sc-lbl">Avg Speed</div></div>
+      <div class="stat-card"><div class="sc-val yellow" id="sc-avgspd">—</div><div class="sc-lbl">Avg Speed (kts)</div></div>
       <div class="stat-card"><div class="sc-val red" id="sc-highalt">—</div><div class="sc-lbl">Max Alt (ft)</div></div>
     </div>
 
@@ -170,10 +170,6 @@
     <div class="dist-section">
       <div class="dist-label">TOP AIRCRAFT TYPES</div>
       <div class="top-types" id="top-types"></div>
-    </div>
-    <div class="dist-section">
-      <div class="dist-label">DATA SOURCES</div>
-      <div class="top-types" id="top-sources"></div>
     </div>
   </div>
 
@@ -445,6 +441,13 @@
         <div id="fs-results-list" class="fs-results-list"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────────────── -->
+  <div id="site-footer">
+    <span id="footer-hits">👁 <span id="hit-count">—</span> visits</span>
+    <span class="footer-sep">·</span>
+    <span id="footer-copy">© <span id="footer-year"></span> Srikanth Nagalla · LiveFlights</span>
   </div>
 
   <script type="module" src="/src/main.js"></script>
